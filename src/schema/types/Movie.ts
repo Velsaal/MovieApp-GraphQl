@@ -3,7 +3,9 @@ import { objectType } from "nexus";
 export const Movie = objectType({
     name: 'Movie',
     definition(t) {
-        t.string('id')
+        t.string('id', {
+            resolve: (parent) => parent._id ? parent._id.toString() : null,
+        })
         t.string('title')
         t.float('rating')
         t.string('description')
@@ -16,5 +18,6 @@ export const Movie = objectType({
         t.string('updatedAt', {
             resolve: (parent) => parent.updatedAt ? new Date(parent.updatedAt).toISOString() : null,
         })
+        t.string('userId')
     }
 })

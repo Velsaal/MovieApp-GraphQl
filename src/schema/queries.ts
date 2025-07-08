@@ -9,15 +9,21 @@ export const Query = queryType({
     
     t.list.field('movies', {
       type: 'Movie',
-      resolve: async () => {
-        return await Movie.find()
+      resolve: async (_, __, ctx) => {
+        if (!ctx.userId) {
+          throw new Error('Not authenticated');
+        }
+        return await Movie.find({ userId: ctx.userId })
       },
     });
     
     t.field('movie', {
       type: 'Movie',
       args: { id: intArg() },
-      resolve: async (_, { id }) => {
+      resolve: async (_, { id }, ctx) => {
+        if (!ctx.userId) {
+          throw new Error('Not authenticated');
+        }
         return await Movie.findById(id)
       },
     });
