@@ -1,4 +1,4 @@
-import { User } from '../models/User';
+import prisma from '../db/prisma';
 import { hashPassword, comparePassword } from './hash';
 import { generateToken } from './jwt';
 import { registerValidation, loginValidation } from './authValidation';
@@ -9,14 +9,17 @@ export async function registerUser(username: string, password: string) {
         throw new Error('Validation error: ' + error.details[0].message);
     }
 
-    const existingUser = await User.findOne({ username });
+    const existingUser = await prisma.user.findUnique({ 
+        where: { username } 
+    });
     if (existingUser) {
         throw new Error('User already exists');
     }
 
     const hashedPassword = await hashPassword(password);
-    const user = new User ({ username, password: hashedPassword });
-    await user.save();
+    const user = await prisma.user.create({ 
+        data: { username, password: hashedPassword } 
+    });
     return user;
 }
 
@@ -26,7 +29,9 @@ export async function loginUser(username: string, password: string) {
         throw new Error('Validation error: ' + error.details[0].message);
     }
 
-    const user = await User.findOne({ username });
+    const user = await prisma.user.findUnique({ 
+        where: { username } 
+    });
     if (!user) {
         throw new Error('User not found');
     }
@@ -34,5 +39,5 @@ export async function loginUser(username: string, password: string) {
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) { throw new Error('Invalid password'); }
     
-    return generateToken(user._id.toString());
+    return generateToken(user.id);
 }

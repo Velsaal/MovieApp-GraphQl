@@ -1,5 +1,5 @@
 import { queryType, intArg } from 'nexus';
-import { Movie } from '../models/Movie';
+import prisma from '../db/prisma';
 
 export const Query = queryType({
   definition(t) {
@@ -13,7 +13,9 @@ export const Query = queryType({
         if (!ctx.userId) {
           throw new Error('Not authenticated');
         }
-        return await Movie.find({ userId: ctx.userId })
+        return await prisma.movie.findMany({ 
+          where: { userId: ctx.userId } 
+        });
       },
     });
     
@@ -24,7 +26,12 @@ export const Query = queryType({
         if (!ctx.userId) {
           throw new Error('Not authenticated');
         }
-        return await Movie.findById(id)
+        return await prisma.movie.findFirst({
+          where: { 
+            id: id.toString(),
+            userId: ctx.userId 
+          }
+        });
       },
     });
   }

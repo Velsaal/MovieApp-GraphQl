@@ -3,9 +3,7 @@ import { objectType } from "nexus";
 export const Movie = objectType({
     name: 'Movie',
     definition(t) {
-        t.string('id', {
-            resolve: (parent) => parent._id ? parent._id.toString() : null,
-        })
+        t.string('id')
         t.string('title')
         t.float('rating')
         t.string('description')

@@ -1,7 +1,7 @@
 import { objectType, mutationType, stringArg, floatArg, intArg, nonNull } from 'nexus';
 import { movieValidation, moviePatchValidation } from '../validation/movieValidation';
 import { registerUser, loginUser } from '../auth/authController';
-import { Movie } from '../models/Movie';
+import prisma from '../db/prisma';
 
 export const DeleteMovie = objectType({
   name: 'DeleteMovie',
@@ -29,12 +29,11 @@ export const Mutation = mutationType({
         username: nonNull(stringArg()),
         password: nonNull(stringArg()),
       },
-      resolve: async (_, { username, password }) => {
-        const token = await loginUser(username, password);
-        return token;
+      resolve: async (_, { username, password }, ctx) => {
+        return await loginUser(username, password);
       },
     })
-
+  
     t.field('createMovie', { 
       type: 'Movie',
       args: {
@@ -53,20 +52,21 @@ export const Mutation = mutationType({
         if (error) {
           throw new Error('Validation error:' + error.details[0].message);
         }
-        const movie = new Movie({
-        title: title,
-        rating: rating,
-        description: description,
-        director: director,
-        year: year,
-        genre: genre,
-        userId: ctx.userId,
-        })
-      await movie.save()
-      return movie
-    },
-
+        const movie = await prisma.movie.create({
+          data: {
+            title: title!,
+            rating: rating!,
+            description: description,
+            director: director,
+            year: year,
+            genre: genre,
+            userId: ctx.userId,
+          }
+        });
+        return movie;
+      },
     })
+
     t.field('updateMovie', {
       type: 'Movie',
       args: {
@@ -92,9 +92,18 @@ export const Mutation = mutationType({
             throw new Error('Validation error: ' + error.details[0].message);
           }
         }
-        const updated = await Movie.findByIdAndUpdate(id, updateData, { new: true });
-        if (!updated) throw new Error('Movie not found');
-        return updated;
+        const updated = await prisma.movie.updateMany({
+          where: { 
+            id: id,
+            userId: ctx.userId 
+          },
+          data: updateData
+        });
+        if (updated.count === 0) throw new Error('Movie not found');
+        
+        return await prisma.movie.findUnique({
+          where: { id: id }
+        });
       },
     });
 
@@ -107,8 +116,13 @@ export const Mutation = mutationType({
         if (!ctx.userId) {
           throw new Error('Not authenticated');
         }
-        const deleted = await Movie.findByIdAndDelete(id)
-        return { success: deleted ? true : false };
+        const deleted = await prisma.movie.deleteMany({
+          where: { 
+            id: id,
+            userId: ctx.userId 
+          }
+        });
+        return { success: deleted.count > 0 };
       },
     })
   },
