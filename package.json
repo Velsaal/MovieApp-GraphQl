@@ -1,5 +1,5 @@
 {
-  "name": "nexustry",
+  "name": "movie-app-graphql",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,9 @@
     "build": "tsc",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev"
+    "db:migrate": "prisma migrate dev",
+    "frontend": "cd frontend && npm start",
+    "dev:full": "concurrently \"npm run dev\" \"npm run frontend\""
   },
   "keywords": [],
   "author": "",
@@ -29,6 +31,7 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.10",
+    "concurrently": "^8.2.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   }

@@ -8,5 +8,9 @@
     "outDir": "dist",
     "sourceMap": true,
     "esModuleInterop": true
-  }
+  },
+  "exclude": [
+    "frontend/**/*",
+    "node_modules/**/*"
+  ]
 }

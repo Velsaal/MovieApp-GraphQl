@@ -13,6 +13,10 @@ const server = new ApolloServer({
   context: ({ req }) => ({userId: getUserIdFromReq(req), 
     req,
   }),
+  cors: {
+    origin: '*',
+    credentials: true,
+  },
 });
 
 server.listen({ port: PORT }).then(({ url }) => {

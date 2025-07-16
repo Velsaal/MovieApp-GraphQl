@@ -17,5 +17,6 @@ export const Movie = objectType({
             resolve: (parent) => parent.updatedAt ? new Date(parent.updatedAt).toISOString() : null,
         })
         t.string('userId')
+        t.string('posterUrl')
     }
-})
+}) 
