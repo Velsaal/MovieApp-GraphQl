@@ -2,7 +2,7 @@ import { ApolloServer } from 'apollo-server';
 import dotenv from 'dotenv';
 import { schema } from './src/schema';
 import prisma from './src/db/prisma';
-import { getUserIdFromReq } from './src/auth/authMiddleware';
+import { verifyToken } from './src/auth/jwt';
 
 dotenv.config();
 
@@ -10,9 +10,26 @@ const PORT = process.env.PORT || 4000;
 
 const server = new ApolloServer({
   schema,
-  context: ({ req }) => ({userId: getUserIdFromReq(req), 
-    req,
-  }),
+  context: async ({ req }) => {
+    const auth = req.headers.authorization || '';
+    let user = null;
+    if (auth.startsWith('Bearer ')) {
+      const token = auth.replace('Bearer ', '');
+      try {
+        const decoded = verifyToken(token);
+        if (typeof decoded === 'object' && 'userId' in decoded) {
+          user = await prisma.user.findUnique({ where: { id: (decoded as any).userId } });
+        }
+      } catch (error) {
+        console.error('Error verifying token:', error);
+      }
+    }
+    return {
+      prisma,
+      user,
+      req,
+    };
+  },
   cors: {
     origin: '*',
     credentials: true,

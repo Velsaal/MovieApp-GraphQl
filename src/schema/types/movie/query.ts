@@ -6,7 +6,7 @@ export const movieQueries = {
   movies: {
     resolve: requireAuth(async (_: any, __: any, ctx: any) => {
       return await prisma.movie.findMany({
-        where: { userId: ctx.userId }
+        where: { userId: ctx.user.id }
       });
     }),
   },
@@ -14,12 +14,9 @@ export const movieQueries = {
   movie: {
     type: 'Movie',
     args: { id: nonNull(stringArg()) },
-    resolve: requireAuth(async (_: any, { id }: any, ctx: any) => {
+    resolve: requireAuth(async (_: any, { id }: any) => {
       return await prisma.movie.findFirst({
-        where: { 
-          id,
-          userId: ctx.userId 
-        }
+        where: { id }
       });
     }),
   }
