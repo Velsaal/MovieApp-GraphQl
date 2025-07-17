@@ -1,6 +1,5 @@
 import { stringArg, floatArg, intArg, nonNull, objectType } from 'nexus';
 import prisma from '../../../db/prisma';
-import { requireAuth } from '../../../middleware/requireAuth';
 
 
 export const DeleteMovie = objectType({
@@ -22,7 +21,7 @@ export const movieMutations = {
       genre: stringArg(),
       posterUrl: stringArg(),
     },
-    resolve: requireAuth(async (_: any, args: any, ctx: any) => {
+    resolve: async (_: any, args: any, ctx: any) => {
       const movie = await prisma.movie.create({
         data: {
           ...args,
@@ -30,7 +29,7 @@ export const movieMutations = {
         }
       });
       return movie;
-    }),
+    },
   },
 
   updateMovie: {
@@ -45,16 +44,16 @@ export const movieMutations = {
       genre: stringArg(),
       posterUrl: stringArg(),
     },
-    resolve: requireAuth(async (_: any, { id, ...args }: any, ctx: any) => {
+    resolve: async (_: any, { id, ...args }: any, ctx: any) => {
       const updated = await prisma.movie.updateMany({
-        where: { id },
+        where: { id, userId: ctx.user.id },
         data: args
       });
       if (updated.count === 0) {
         throw new Error('Movie not found');
       }
       return await prisma.movie.findUnique({ where: { id } });
-    }),
+    },
   },
 
   deleteMovie: {
@@ -62,14 +61,14 @@ export const movieMutations = {
     args: {
       id: nonNull(stringArg()),
     },
-    resolve: requireAuth(async (_: any, { id }: any, ctx: any) => {
+    resolve: async (_: any, { id }: any, ctx: any) => {
       const deleted = await prisma.movie.deleteMany({
-        where: { id }
+        where: { id, userId: ctx.user.id }
       });
       if (deleted.count === 0) {
         throw new Error('Movie not found');
       }
       return { success: true };
-    }),
+    },
   }
 }
