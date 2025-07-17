@@ -42,5 +42,37 @@ export async function loginUser(username: string, password: string) {
         throw new UserInputError('Invalid password'); 
     }
     
-    return generateToken(user.id);
+    // Создаем сессию в БД
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 дней
+    
+    const session = await prisma.session.create({
+        data: {
+            userId: user.id,
+            token: '', // Будет заполнено после генерации токена
+            expiresAt
+        }
+    });
+    
+    // Генерируем токен с sessionId
+    const token = generateToken(session.id);
+    
+    // Обновляем сессию с токеном
+    await prisma.session.update({
+        where: { id: session.id },
+        data: { token }
+    });
+    
+    return token;
+}
+
+export async function logoutUser(sessionId: string) {
+    try {
+        await prisma.session.delete({
+            where: { id: sessionId }
+        });
+        return true;
+    } catch (error) {
+        return false;
+    }
 }

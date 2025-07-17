@@ -1,4 +1,5 @@
 import { ApolloServer } from 'apollo-server';
+import { AuthenticationError } from 'apollo-server';
 import dotenv from 'dotenv';
 import { schema } from './src/schema';
 import prisma from './src/db/prisma';
@@ -17,12 +18,24 @@ const server = new ApolloServer({
       const token = auth.replace('Bearer ', '');
       try {
         const decoded = verifyToken(token);
-        if (typeof decoded === 'object' && 'userId' in decoded) {
-          user = await prisma.user.findUnique({ where: { id: (decoded as any).userId } });
+        if (typeof decoded === 'object' && 'sessionId' in decoded) {
+          // Проверяем сессию в БД
+          const session = await prisma.session.findFirst({
+            where: { 
+              id: (decoded as any).sessionId,
+              expiresAt: { gt: new Date() } // Проверяем, что сессия не истекла
+            },
+            include: { user: true }
+          });
+          
+          if (session && session.user) {
+            user = session.user;
+          }
         }
-      } catch (error) {
-        console.error('Error verifying token:', error);
-      }
+              } catch (error) {
+          // Токен недействителен - оставляем user как null
+          console.warn('Invalid token:', error instanceof Error ? error.message : 'Unknown error');
+        }
     }
     return {
       prisma,
