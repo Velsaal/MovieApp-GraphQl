@@ -1,6 +1,5 @@
 import { stringArg, nonNull } from 'nexus';
 import { registerUser, loginUser, logoutUser } from '../../../auth/authController';
-import { requireAuth } from '../../../middleware/requireAuth';
 
 export const userMutations = {
   register: {
@@ -28,8 +27,7 @@ export const userMutations = {
   
   logout: {
     type: 'Boolean',
-    resolve: requireAuth(async (_: any, __: any, ctx: any) => {
-      // Получаем sessionId из токена
+    resolve: async (_: any, __: any, ctx: any) => {
       const auth = ctx.req.headers.authorization || '';
       if (auth.startsWith('Bearer ')) {
         const token = auth.replace('Bearer ', '');
@@ -44,6 +42,6 @@ export const userMutations = {
         }
       }
       return false;
-    }),
+    },
   }
 } 
